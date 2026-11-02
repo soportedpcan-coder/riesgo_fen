@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resultados – FEN Mamógrafos</title><link rel="icon" href="/static/logo.png"><link rel="stylesheet" href="/static/style.css"></head><body>
+<header><img alt="Ministerio de Salud" src="/static/logo.png"><div><h1>Resultados de la evaluación de riesgo FEN</h1><p>Módulo administrador · DPCAN</p></div>
+<form class="top-r" method="post" action="/admin/logout"><button>Cerrar sesión</button></form></header>
+<main><div class="card"><h2>Respuestas registradas</h2><p class="mu" id="src">Cargando…</p>
+<div class="admin-kpis" id="k"></div>
+<div class="dash-charts">
+<section class="dash-chart"><h3>Distribución por nivel de riesgo</h3><div id="risk-chart"></div></section>
+<section class="dash-chart"><h3>Índice promedio por dimensión</h3><div id="dimension-chart"></div></section>
+</div>
+<div class="admin-tools"><div><label for="q">Buscar</label><input id="q" type="search" placeholder="Nombre, DNI, DIRESA o establecimiento"></div>
+<div><label for="nv">Filtrar por nivel</label><select id="nv"><option value="">Todos los niveles</option><option>Alto riesgo</option><option>Riesgo moderado</option><option>Bajo riesgo</option><option value="alerta">Con alerta crítica</option></select></div></div>
+<p class="mu" id="cnt"></p><div class="tw"><table class="admin-table"><thead><tr><th>Fecha</th><th>Participante</th><th>DIRESA</th><th>Establecimiento</th><th>Índice</th><th>Nivel</th><th>Alerta</th><th>Detalle</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="bar"><a class="mu" href="/" style="align-self:center">Ir a la encuesta</a><a href="/admin/export.csv"><button type="button">Exportar CSV</button></a></div></div></main>
+<div class="toast-region" id="toasts" aria-live="polite" aria-atomic="false"></div>
+<script src="/static/notifications.js"></script>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const col=n=>n==="Alto riesgo"?"var(--ba)":n==="Riesgo moderado"?"var(--wa)":"var(--ok)",TXT=["No","Parcial","Sí"];
+let L=[],P=[],DIM=[];
+const match=()=>{const t=$("#q").value.trim().toLowerCase(),n=$("#nv").value;return L.filter(r=>(!n||(n==="alerta"?r.alerta_critica:r.nivel===n))&&(!t||[r.nombres,r.dni,r.diresa,r.establecimiento].some(x=>String(x).toLowerCase().includes(t))))};
+function render(){const rows=match();$("#cnt").textContent=`Mostrando ${rows.length} de ${L.length}.`;
+const avg=L.length?(L.reduce((s,r)=>s+r.indice,0)/L.length).toFixed(1):"–";
+$("#k").innerHTML=[["Respuestas",L.length],["Índice promedio",avg],["Alto riesgo",L.filter(r=>r.nivel==="Alto riesgo").length],["Alerta crítica",L.filter(r=>r.alerta_critica).length]].map(([a,b])=>`<div><span class="mu">${a}</span><b>${b}</b></div>`).join("");
+const niveles=["Bajo riesgo","Riesgo moderado","Alto riesgo"];
+$("#risk-chart").innerHTML=niveles.map(n=>{const count=L.filter(r=>r.nivel===n).length,pct=L.length?Math.round(count/L.length*100):0;return`<div class="chart-row"><div class="chart-label"><span>${esc(n)}</span><b>${count} · ${pct}%</b></div><div class="chart-track"><i style="width:${pct}%;background:${col(n)}" role="progressbar" aria-label="${esc(n)}" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"></i></div></div>`}).join("");
+$("#dimension-chart").innerHTML=DIM.map(n=>{const values=L.map(r=>Number(r.dimensiones[n])||0),pct=values.length?(values.reduce((sum,value)=>sum+value,0)/values.length):0;return`<div class="chart-row"><div class="chart-label"><span>${esc(n)}</span><b>${pct.toFixed(1)}%</b></div><div class="chart-track"><i style="width:${pct}%;background:${pct>=67?"var(--ba)":pct>=34?"var(--wa)":"var(--ok)"}" role="progressbar" aria-label="${esc(n)}" aria-valuenow="${pct.toFixed(1)}" aria-valuemin="0" aria-valuemax="100"></i></div></div>`}).join("");
+$("#rows").innerHTML=rows.length?rows.map(r=>`<tr><td>${esc(r.fecha.slice(0,10))}</td><td>${esc(r.nombres)}<br><span class="mu">DNI ${esc(r.dni)}</span></td><td>${esc(r.diresa)}</td><td style="white-space:normal;min-width:200px">${esc(r.establecimiento)}</td><td><b>${r.indice}</b> <span class="mu">(${r.puntaje}/${P.length*2})</span></td><td><span class="lv" style="background:${col(r.nivel)};font-size:.75rem">${esc(r.nivel)}</span></td><td>${r.alerta_critica?"⚠️":""}</td>
+<td><details><summary>Ver</summary><div class="admin-detail"><p><b>Cargo:</b> ${esc(r.cargo)} · <b>Tel:</b> ${esc(r.telefono)} · <b>Correo:</b> ${esc(r.correo)}</p>
+<p><b>RENIPRESS:</b> ${r.renipress} · <b>Cat.:</b> ${esc(r.categoria)} · <b>Mamógrafos:</b> ${r.mamografos} (${r.operativos} operativos) · <b>Jefe:</b> ${esc(r.jefe_tel)} · <b>Imágenes:</b> ${esc(r.resp_imagenes)}</p>
+<p>${Object.entries(r.dimensiones).map(([k,x])=>`<b>${esc(k)}:</b> ${x}%`).join(" · ")}</p>
+<div class="admin-questions">${P.map((q,i)=>`<div><b>${i+1}. ${esc(q)}</b><br>${TXT[r.respuestas[i]]} (${r.respuestas[i]})</div>`).join("")}</div>
+<p><b>Comentario:</b> ${esc(r.comentario||"—")}</p><button class="s" onclick="del(${r.id})">Eliminar registro</button></div></details></td></tr>`).join(""):`<tr><td colspan="8">Sin resultados.</td></tr>`}
+async function del(id){if(!confirm("¿Eliminar este registro de forma permanente? El DNI podrá volver a responder."))return;try{const r=await fetch("/api/admin/respuestas/"+id,{method:"DELETE"});if(!r.ok)throw new Error("No se pudo eliminar el registro.");L=L.filter(x=>x.id!==id);render();toast("Registro eliminado.","success")}catch(e){toast(e.message,"error")}}
+fetch("/api/admin/respuestas").then(r=>{if(r.status===401){location.href="/admin";throw new Error("Sesión expirada.")}if(!r.ok)throw new Error("No se pudieron cargar las respuestas.");return r.json()}).then(j=>{P=j.preguntas;L=j.rows;DIM=j.dimensiones;$("#src").textContent="Base de datos PostgreSQL · actualizado "+new Date().toLocaleString("es-PE");render()}).catch(e=>{if(e.message!=="Sesión expirada.")toast(e.message,"error",0)});
+$("#q").oninput=render;$("#nv").onchange=render;
+</script></body></html>

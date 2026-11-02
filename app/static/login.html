@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acceso administrador – FEN Mamógrafos</title><link rel="icon" href="/static/logo.png"><link rel="stylesheet" href="/static/style.css"></head><body>
+<header><img alt="Ministerio de Salud" src="/static/logo.png"><div><h1>Módulo administrador</h1><p>Evaluación de riesgo FEN – Mamógrafos</p></div></header>
+<main><form class="card login" method="post" action="/admin/login">
+<h2>Iniciar sesión</h2><p class="mu">Acceso restringido al equipo de DPCAN.</p>
+<label for="u">Usuario</label><input id="u" name="usuario" autocomplete="username" required>
+<label for="p">Contraseña</label><input id="p" name="clave" type="password" autocomplete="current-password" required>
+<div class="bar"><a href="/" class="mu" style="align-self:center">← Ir a la encuesta</a><button>Ingresar</button></div>
+</form></main>
+<div class="toast-region" id="toasts" aria-live="polite" aria-atomic="false"></div>
+<script src="/static/notifications.js"></script>
+<script>const e=new URLSearchParams(location.search).get("e");if(e)toast(e==="bloqueado"?"Demasiados intentos. Espere 15 minutos.":"Usuario o contraseña incorrectos.","error",0);</script>
+</body></html>

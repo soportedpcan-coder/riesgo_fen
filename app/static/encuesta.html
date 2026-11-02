@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Evaluación de riesgo frente al FEN – Mamógrafos</title>
+<link rel="icon" href="/static/logo.png"><link rel="stylesheet" href="/static/style.css">
+</head><body>
+<header><img alt="Ministerio de Salud" src="/static/logo.png"><div><h1>Evaluación de riesgo frente al FEN – Equipo de mamógrafo</h1><p>MINSA · DPCAN – Dirección de Prevención y Control del Cáncer · Fenómeno El Niño 2026</p></div><a class="header-login" href="/admin">Iniciar sesión</a></header>
+<main><div class="steps" id="st"></div><div id="v"><div class="card mu">Cargando…</div></div></main>
+<div class="toast-region" id="toasts" aria-live="polite" aria-atomic="false"></div>
+<script src="/static/notifications.js"></script>
+<script>
+let D=[],G=[],Q=[];
+const S={step:1,u:{},i:{},a:[],c:"",res:null};
+const $=s=>document.querySelector(s),v=$("#v"),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const val=id=>($("#"+id).value||"").trim();
+const color=n=>n==="Alto riesgo"?"var(--ba)":n==="Riesgo moderado"?"var(--wa)":"var(--ok)";
+const OPC=[[0,"No"],[1,"Parcial"],[2,"Sí"]];
+function steps(){$("#st").innerHTML=[["Participante","Quién registra"],["Ubicación e IPRESS","DIRESA · Establecimiento"],["Encuesta",Q.length+" criterios de riesgo"]].map((t,i)=>`<div class="${S.step==i+1?"on":S.step>i+1?"done":""}"><i>${S.step>i+1?"✓":i+1}</i><span><b>${t[0]}</b><small>${t[1]}</small></span></div>`).join("")}
+function r1(){steps();const u=S.u;v.innerHTML=`<div class="card"><h2>1. Datos del participante</h2><p class="mu" style="margin:0 0 6px">Indique <b>quién realiza el registro</b>. Solo se permite una respuesta por DNI.</p>
+<label>Nombres y apellidos</label><input id="nom" value="${esc(u.nom)}" autocomplete="name">
+<div class="g2"><div><label>DNI</label><input id="dni" inputmode="numeric" maxlength="8" value="${esc(u.dni)}"></div>
+<div><label>Cargo / función</label><input id="car" value="${esc(u.car)}"></div>
+<div><label>Teléfono / celular</label><input id="tel" inputmode="tel" value="${esc(u.tel)}"></div>
+<div><label>Correo electrónico</label><input id="mail" type="email" value="${esc(u.mail)}"></div></div>
+<div class="bar"><span></span><button id="n">Siguiente →</button></div></div>`;
+$("#n").onclick=()=>{const x={nom:val("nom"),dni:val("dni"),car:val("car"),tel:val("tel"),mail:val("mail")};
+const e=x.nom.length<3?"Ingrese sus nombres y apellidos.":!/^\d{8}$/.test(x.dni)?"El DNI debe tener 8 dígitos.":!x.car?"Ingrese su cargo.":!/^\d{7,12}$/.test(x.tel.replace(/[\s-]/g,""))?"Ingrese un teléfono válido.":!/^\S+@\S+\.\S+$/.test(x.mail)?"Ingrese un correo válido.":"";
+if(e)return toast(e,"error");
+S.u=x;S.step=2;r2()}}
+function r2(){steps();const i=S.i,dz=[...new Set(D.map(d=>d[0]))];
+v.innerHTML=`<div class="card"><h2>2. IPRESS desde donde participa</h2>
+<label>DIRESA / GERESA / DIRIS</label><select id="dz"><option value="">Seleccione…</option>${dz.map(z=>`<option ${i.dz==z?"selected":""}>${esc(z)}</option>`).join("")}</select>
+<label>Establecimiento de salud</label><select id="es"></select><div id="inf"></div>
+<div class="g2"><div><label>Teléfono del jefe del establecimiento</label><input id="jt" inputmode="tel" value="${esc(i.jt)}"></div>
+<div><label>Responsable de Diagnóstico por Imágenes (nombre y contacto)</label><input id="sd" value="${esc(i.sd)}"></div></div>
+<div class="bar"><button class="s" id="b">← Atrás</button><button id="n">Siguiente →</button></div></div>`;
+const show=()=>{const k=$("#es").value;$("#inf").innerHTML=k===""?"":(d=>`<div class="info"><div><span class="mu">RENIPRESS</span><b>${d[2]}</b>${d[3]}</div><div><span class="mu">Mamógrafos</span><b>${d[5]}</b></div><div><span class="mu">Operativos</span><b>${d[6]}</b></div></div>`)(D[k])};
+const fill=()=>{const z=$("#dz").value;$("#es").innerHTML='<option value="">Seleccione…</option>'+D.map((d,k)=>[d,k]).filter(([d])=>d[0]==z).map(([d,k])=>`<option value="${k}" ${i.k==k?"selected":""}>${esc(d[4])}</option>`).join("");show()};
+$("#dz").onchange=()=>{i.k="";fill()};$("#es").onchange=show;fill();
+$("#b").onclick=()=>{S.i={k:$("#es").value,dz:$("#dz").value,jt:val("jt"),sd:val("sd")};S.step=1;r1()};
+$("#n").onclick=()=>{const k=$("#es").value,jt=val("jt"),sd=val("sd");
+const e=k===""?"Seleccione la DIRESA y el establecimiento.":!/^\d{7,12}$/.test(jt.replace(/[\s-]/g,""))?"Ingrese el teléfono del jefe del establecimiento.":sd.length<3?"Ingrese el responsable de Diagnóstico por Imágenes.":"";
+if(e)return toast(e,"error");S.i={k,dz:$("#dz").value,jt,sd};S.step=3;r3()}}
+function r3(){steps();let n=0;
+v.innerHTML=`<div class="card"><h2>3. Encuesta de riesgo</h2><p class="mu" style="margin:0">Indique en qué grado se presenta cada situación en su establecimiento ante el Fenómeno El Niño.</p>
+<div class="legend"><span><b>No (0)</b> · no se presenta</span><span><b>Parcial (1)</b> · se presenta, pero hay medidas</span><span><b>Sí (2)</b> · se presenta sin medidas de control</span></div>
+${G.map(g=>`<div class="mu" style="margin-top:14px;font-weight:700;text-transform:uppercase;font-size:.75rem">${esc(g[0])}</div>`+g[1].map(q=>{const k=n++;return`<div class="q" id="q${k}"><div>${k+1}. ${esc(q)}</div><div class="yn">${OPC.map(([x,t])=>`<label><input type="radio" name="r${k}" value="${x}" ${S.a[k]===x?"checked":""}><span>${t}</span></label>`).join("")}</div></div>`}).join("")).join("")}
+<label>Comentario adicional (opcional)</label><textarea id="c" rows="3" maxlength="2000">${esc(S.c)}</textarea>
+<div class="bar"><button class="s" id="b">← Atrás</button><button id="n">Enviar encuesta</button></div></div>`;
+const rd=()=>{S.c=$("#c").value;Q.forEach((_,k)=>{const c=document.querySelector(`input[name=r${k}]:checked`);S.a[k]=c?+c.value:null})};
+$("#b").onclick=()=>{rd();S.step=2;r2()};
+$("#n").onclick=async()=>{rd();let miss=0;Q.forEach((_,k)=>{const m=S.a[k]===null;$("#q"+k).classList.toggle("err",m);miss+=m});
+if(miss){toast(`Faltan ${miss} pregunta(s) por responder.`,"error");document.querySelector(".q.err")?.scrollIntoView({behavior:"smooth",block:"center"});return}
+if(!confirm("¿Confirma el envío? No podrá modificar sus respuestas."))return;
+$("#n").disabled=true;const sending=toast("Enviando encuesta…","info",0);
+try{const r=await fetch("/api/respuestas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...S.u,k:+S.i.k,jt:S.i.jt,sd:S.i.sd,a:S.a,c:S.c.trim()})});
+const j=await r.json();sending.dismiss();if(!r.ok){$("#n").disabled=false;return toast(typeof j.detail==="string"?j.detail:"Revise los datos ingresados.","error")}
+S.res=j;r4()}catch(_){sending.dismiss();$("#n").disabled=false;toast("Error de conexión. Intente nuevamente.","error")}}}
+function r4(){const r=S.res;$("#st").innerHTML="";
+v.innerHTML=`<div class="card res"><h2>¡Gracias por participar!</h2><p class="mu">${esc(r.establecimiento)}</p>
+<div class="sc">${r.indice}<span class="mu" style="font-size:1rem"> / 100</span></div><span class="lv" style="background:${color(r.nivel)}">${r.nivel}</span>
+<p class="mu">Puntaje: ${r.puntaje} de ${r.maximo}</p>
+<div class="dims">${Object.entries(r.dimensiones).map(([k,x])=>`<div>${esc(k)} <b style="float:right">${x}%</b><div class="meter"><i style="width:${x}%;background:${x>=67?"var(--ba)":x>=34?"var(--wa)":"var(--ok)"}"></i></div></div>`).join("")}</div>
+${r.alerta_critica?`<div class="alert"><b>Alerta crítica:</b> los criterios ${r.criticos.join(", ")} comprometen directamente la operatividad del mamógrafo. Se recomienda seguimiento prioritario.</div>`:""}
+<div class="bar" style="justify-content:center"><button id="nw">Nueva encuesta</button></div></div>`;
+$("#nw").onclick=()=>{Object.assign(S,{step:1,u:{},i:{},a:Array(Q.length).fill(null),c:"",res:null});r1()}}
+fetch("/api/config").then(r=>r.json()).then(c=>{D=c.establecimientos;G=c.dimensiones;Q=G.flatMap(g=>g[1]);S.a=Array(Q.length).fill(null);r1()}).catch(()=>{v.innerHTML='<div class="card mu">No se pudo cargar la encuesta.</div>';toast("No se pudo cargar la encuesta. Recargue la página para volver a intentar.","error",0)});
+</script></body></html>
